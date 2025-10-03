@@ -112,11 +112,11 @@ def construct_system(r_points, z_points, k_fun, qppp,
 
             # ---- Outer radial boundary at i = Nr-1: (E3D/E3N/E3R) ----
             if i == Nr-1:
-                kind = BC_r_top[0].lower()
+                kind = BC_z[0].lower()
                 if kind == 'dirichlet':  # (E3D)
                     A[p, :] = 0.0
                     A[p, p] = 1.0
-                    b[p] = BC_r_top[1]
+                    b[p] = BC_z[1]
                     continue  # row done
 
                 elif kind == 'neumann':  # (E3N): add + (re/(ri*dr)) * qR'' to b, remove E coupling
@@ -126,11 +126,11 @@ def construct_system(r_points, z_points, k_fun, qppp,
                     # Diagonal should NOT include DE for a boundary row
                     A[p, p] -= DE
                     # RHS add from known east-face flux
-                    qR = BC_r_top[1]
+                    qR = BC_z[1]
                     b[p] += (re / (ri * dr)) * qR
 
                 elif kind == 'robin':    # (E3R): diag += DE*alpha, b += DE*gamma
-                    h, Tinf = BC_r_top[1], BC_r_top[2]
+                    h, Tinf = BC_z[1], BC_z[2]
                     k_face = K[i, j]          # k_E^* (simple choice)
                     DE_star = (re * k_face) / (ri * dr*dr)
                     beta = h * dr / max(k_face, 1e-300)
@@ -144,26 +144,26 @@ def construct_system(r_points, z_points, k_fun, qppp,
                     b[p]    += DE_star * gamma
 
                 else:
-                    raise ValueError(f"Unknown BC kind for outer radius: {BC_r_top}")
+                    raise ValueError(f"Unknown BC kind for outer radius: {BC_z}")
 
             # ---- TOP axial boundary at j = Nz-1: (E4D/E4N/E4R) ----
             if j == Nz-1:
-                kind = BC_z[0].lower()
+                kind = BC_r_top[0].lower()
                 if kind == 'dirichlet':  # (E4D)
                     A[p, :] = 0.0
                     A[p, p] = 1.0
-                    b[p] = BC_z[1]
+                    b[p] = BC_r_top[1]
                     continue
 
                 elif kind == 'neumann':  # (E4N): add + q_t''/dz to b, remove N coupling
                     A[p, p] -= DN
                     if j < Nz-1:
                         A[p, idx(i, j+1)] = 0.0
-                    qt = BC_z[1]
+                    qt = BC_r_top[1]
                     b[p] += qt / dz
 
                 elif kind == 'robin':    # (E4R): diag += DN*alpha_N, b += DN*gamma_N (using k_face = K[i,j])
-                    h, Tinf = BC_z[1], BC_z[2]
+                    h, Tinf = BC_r_top[1], BC_r_top[2]
                     k_face = K[i, j]
                     DN_star = k_face / (dz*dz)
                     beta = h * dz / max(k_face, 1e-300)
@@ -176,7 +176,7 @@ def construct_system(r_points, z_points, k_fun, qppp,
                     b[p]    += DN_star * gamma
 
                 else:
-                    raise ValueError(f"Unknown BC kind for top z boundary: {BC_z}")
+                    raise ValueError(f"Unknown BC kind for top z boundary: {BC_r_top}")
 
             # ---- BOTTOM axial boundary at j = 0: (E5D/E5N/E5R) ----
             if j == 0:
